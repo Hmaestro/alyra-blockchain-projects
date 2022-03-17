@@ -29,27 +29,27 @@ Voici le déroulement de l'ensemble du processus de vote :
 - L’administrateur est celui qui va déployer le smart contract. 
 - Votre smart contract doit définir les structures de données suivantes : 
 
-    struct Voter {
-        bool isRegistered;
-        bool hasVoted;
-        uint votedProposalId;
-    }
+        struct Voter {
+            bool isRegistered;
+            bool hasVoted;
+            uint votedProposalId;
+        }
 
-    struct Proposal {
-        string description;
-        uint voteCount;
-    }
+        struct Proposal {
+            string description;
+            uint voteCount;
+        }
 
 - Votre smart contract doit définir une énumération qui gère les différents états d’un vote  
 
-    enum WorkflowStatus {
-        RegisteringVoters,
-        ProposalsRegistrationStarted,
-        ProposalsRegistrationEnded,
-        VotingSessionStarted,
-        VotingSessionEnded,
-        VotesTallied
-    }  
+        enum WorkflowStatus {
+            RegisteringVoters,
+            ProposalsRegistrationStarted,
+            ProposalsRegistrationEnded,
+            VotingSessionStarted,
+            VotingSessionEnded,
+            VotesTallied
+        }  
 
 - Votre smart contract doit définir un uint `winningProposalId` qui représente l’id du gagnant ou une fonction `getWinner` qui retourne le gagnant.  
 
