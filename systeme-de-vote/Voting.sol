@@ -32,7 +32,7 @@ contract Voting is Ownable {
     WorkflowStatus public activeStatus;
     mapping (uint => Proposal) public proposals;
     uint proposalIndex;
-    address[] voters;
+    uint[] proposalIds;
 
     event VoterRegistered(address voterAddress); 
     event WorkflowStatusChange(WorkflowStatus previousStatus, WorkflowStatus newStatus);
@@ -49,7 +49,6 @@ contract Voting is Ownable {
         require(activeStatus == WorkflowStatus.RegisteringVoters, unicode"L'enregistrement des votants est terminé");
         
         whitelist[_voterAddress] = Voter(true, false, 0);
-        voters.push(_voterAddress);
         emit VoterRegistered(_voterAddress);
     }
 
@@ -69,6 +68,7 @@ contract Voting is Ownable {
 
         //FIXME Doublon de proposition
         proposals[proposalIndex] = Proposal({description: _proposal, voteCount:0});
+        proposalIds.push(proposalIndex);
         emit ProposalRegistered(proposalIndex);             
     }
 
@@ -92,9 +92,12 @@ contract Voting is Ownable {
     function voting(uint _proposalId) public onlyRegistered {
         require(activeStatus == WorkflowStatus.VotingSessionStarted, unicode"La session de vote n'est pas encore démarrée.");
         require(!whitelist[msg.sender].hasVoted, unicode"Euh... Vous avez déjà voté !!!");
+        // vérifier que la proposition existe
+        // require(isProposalExist(_proposalId), unicode"Cette proposition n'existe pas.")
 
         whitelist[msg.sender].votedProposalId = _proposalId;
         whitelist[msg.sender].hasVoted = true;
+        proposals[_proposalId].voteCount++;
         emit Voted (msg.sender, _proposalId);
     }
 
@@ -109,8 +112,9 @@ contract Voting is Ownable {
         require(activeStatus == WorkflowStatus.VotingSessionEnded, unicode"La session de vote n'est pas terminée");
 
         // FIXME Comptage des votes
-        for (uint i = 0; i < voters.length; i++) {
-            whitelist[ voters[i] ].votedProposalId;
+         
+        for (uint i = 0; i < proposalIds.length; i++) {
+            winningProposalId = ( proposals[proposalIds[i]].voteCount > winningProposalId) ? proposalIds[i] : winningProposalId;
         }
     }
 
