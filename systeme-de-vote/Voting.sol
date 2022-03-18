@@ -63,10 +63,8 @@ contract Voting is Ownable {
     // Enregistrer les propositions des électeurs
     function registerProposal(string calldata _proposal) public onlyRegistered {
         require(activeStatus == WorkflowStatus.ProposalsRegistrationStarted, unicode"Enregistrement de proposition non autorisé. Voir l'administrateur");
-      
+        require(isNewProposal(_proposal), unicode"Cette proposition a déjà été proposée");
         proposalIndex++;
-
-        //FIXME Doublon de proposition
         proposals[proposalIndex] = Proposal({description: _proposal, voteCount:0});
         proposalIds.push(proposalIndex);
         emit ProposalRegistered(proposalIndex);             
@@ -91,9 +89,9 @@ contract Voting is Ownable {
     // Les électeurs inscrits votent pour leurs propositions préférées
     function voting(uint _proposalId) public onlyRegistered {
         require(activeStatus == WorkflowStatus.VotingSessionStarted, unicode"La session de vote n'est pas encore démarrée.");
-        require(!whitelist[msg.sender].hasVoted, unicode"Euh... Vous avez déjà voté !!!");
+        require(!whitelist[msg.sender].hasVoted, unicode"Vous avez déjà voté !!!");
         // vérifier que la proposition existe
-        // require(isProposalExist(_proposalId), unicode"Cette proposition n'existe pas.")
+        require(isProposalExist(_proposalId), unicode"Cette proposition n'existe pas. Faites un autre choix");
 
         whitelist[msg.sender].votedProposalId = _proposalId;
         whitelist[msg.sender].hasVoted = true;
@@ -114,8 +112,22 @@ contract Voting is Ownable {
         // FIXME Comptage des votes
          
         for (uint i = 0; i < proposalIds.length; i++) {
-            winningProposalId = ( proposals[proposalIds[i]].voteCount > winningProposalId) ? proposalIds[i] : winningProposalId;
+            winningProposalId = ( proposals[proposalIds[i]].voteCount > winningProposalId ) ? proposalIds[i] : winningProposalId;
         }
+    }
+
+    function isProposalExist(uint _proposalId) private view returns (bool) {
+        return ( bytes(proposals[_proposalId].description) ).length > 0;
+    }
+
+    function isNewProposal(string calldata _proposalDescription) private views returns(bool) {
+
+        for(uint i=0; i < proposalIds.length; i++) {
+            if ( keccak256(abi.encodePacked( proposals[proposalIds[i]].description) ) == keccak256(abi.encodePacked(_proposalDescription)) ) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
