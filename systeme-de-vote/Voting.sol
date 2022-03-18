@@ -121,6 +121,7 @@ contract Voting is Ownable {
             winningProposalId = ( proposals[proposalIds[i]].voteCount > winningProposalId ) ? proposalIds[i] : winningProposalId;
         }
         activeStatus = WorkflowStatus.VotesTallied;
+        emit WorkflowStatusChange(WorkflowStatus.VotingSessionEnded, WorkflowStatus.VotesTallied);
     }
 
     function isProposalExist(uint _proposalId) private view returns (bool) {
