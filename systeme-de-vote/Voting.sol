@@ -114,13 +114,14 @@ contract Voting is Ownable {
         for (uint i = 0; i < proposalIds.length; i++) {
             winningProposalId = ( proposals[proposalIds[i]].voteCount > winningProposalId ) ? proposalIds[i] : winningProposalId;
         }
+        activeStatus = WorkflowStatus.VotesTallied;
     }
 
     function isProposalExist(uint _proposalId) private view returns (bool) {
         return ( bytes(proposals[_proposalId].description) ).length > 0;
     }
 
-    function isNewProposal(string calldata _proposalDescription) private views returns(bool) {
+    function isNewProposal(string calldata _proposalDescription) private view returns(bool) {
 
         for(uint i=0; i < proposalIds.length; i++) {
             if ( keccak256(abi.encodePacked( proposals[proposalIds[i]].description) ) == keccak256(abi.encodePacked(_proposalDescription)) ) {
@@ -128,6 +129,11 @@ contract Voting is Ownable {
             }
         }
         return true;
+    }
+
+    function getWinner() public view returns(string description, uint voteCount) {
+        require(activeStatus == WorkflowStatus.VotesTallied, unicode"Le résultat n'est pas encore disponible");
+        return (proposals[winningProposalId].description, proposals[winningProposalId].voteCount);
     }
 
 }
