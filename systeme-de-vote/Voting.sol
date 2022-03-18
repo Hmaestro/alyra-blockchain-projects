@@ -28,7 +28,7 @@ contract Voting is Ownable {
 
     uint public winningProposalId;
 
-    mapping(address => Voter) public whitelist;
+    mapping(address => Voter) public voters;
     WorkflowStatus public activeStatus;
     mapping (uint => Proposal) public proposals;
     uint proposalIndex;
@@ -40,7 +40,7 @@ contract Voting is Ownable {
     event Voted (address voter, uint proposalId);
 
     modifier onlyRegistered() {
-        require(whitelist[msg.sender].isRegistered, unicode"Interdit: Utilisateur non enregistré");
+        require(voters[msg.sender].isRegistered, unicode"Interdit: Utilisateur non enregistré");
         _;
     }
 
@@ -61,8 +61,9 @@ contract Voting is Ownable {
 
     // Enregistrement d'un votant par l'admin dans la liste blanche
     function registerVoter(address _voterAddress) public onlyOwner onlyRegisteringVotersActive {        
-        // FIXME check if voter isn't already registered
-        whitelist[_voterAddress] = Voter(true, false, 0);
+        // Vérifier si l'électeur n'est pas déjà enregistré
+        require(!voters[_voterAddress].isRegistered, unicode"Electeur déjà enregistré");
+        voters[_voterAddress] = Voter(true, false, 0);
         emit VoterRegistered(_voterAddress);
     }
 
@@ -97,12 +98,12 @@ contract Voting is Ownable {
 
     // Les électeurs inscrits votent pour leurs propositions préférées
     function voting(uint _proposalId) public onlyRegistered onlyVotingSessionStarted {
-        require(!whitelist[msg.sender].hasVoted, unicode"Vous avez déjà voté !!!");
+        require(!voters[msg.sender].hasVoted, unicode"Vous avez déjà voté !!!");
         // vérifier que la proposition existe
         require(isProposalExist(_proposalId), unicode"Cette proposition n'existe pas. Faites un autre choix");
 
-        whitelist[msg.sender].votedProposalId = _proposalId;
-        whitelist[msg.sender].hasVoted = true;
+        voters[msg.sender].votedProposalId = _proposalId;
+        voters[msg.sender].hasVoted = true;
         proposals[_proposalId].voteCount++;
         emit Voted (msg.sender, _proposalId);
     }
