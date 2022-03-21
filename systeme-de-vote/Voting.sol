@@ -90,7 +90,7 @@ contract Voting is Ownable {
 
     // Demarrer la session de vote
     function startVotingSession() public onlyOwner {
-        require(activeStatus == WorkflowStatus.ProposalsRegistrationEnded, unicode"Session d'enregistrement des propositions non terminée");
+        require(activeStatus == WorkflowStatus.ProposalsRegistrationEnded, unicode"Session d'enregistrement des propositions inactive");
 
         activeStatus = WorkflowStatus.VotingSessionStarted;
         emit WorkflowStatusChange(WorkflowStatus.ProposalsRegistrationEnded, WorkflowStatus.VotingSessionStarted);
