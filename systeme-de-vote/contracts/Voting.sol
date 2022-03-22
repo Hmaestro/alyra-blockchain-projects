@@ -118,7 +118,7 @@ contract Voting is Ownable {
         require(activeStatus == WorkflowStatus.VotingSessionEnded, unicode"La session de vote n'est pas terminée");
          
         for (uint i = 0; i < proposalIds.length; i++) {
-            winningProposalId = ( proposals[proposalIds[i]].voteCount > winningProposalId ) ? proposalIds[i] : winningProposalId;
+            winningProposalId = ( proposals[proposalIds[i]].voteCount > proposals[winningProposalId].voteCount ) ? proposalIds[i] : winningProposalId;
         }
         activeStatus = WorkflowStatus.VotesTallied;
         emit WorkflowStatusChange(WorkflowStatus.VotingSessionEnded, WorkflowStatus.VotesTallied);
