@@ -60,7 +60,7 @@ contract Voting is Ownable {
     }
 
     // Enregistrement d'un votant par l'admin dans la liste blanche
-    function registerVoter(address _voterAddress) public onlyOwner onlyRegisteringVotersActive {        
+    function registerVoter(address _voterAddress) external onlyOwner onlyRegisteringVotersActive {        
         // Vérifier si l'électeur n'est pas déjà enregistré
         require(!voters[_voterAddress].isRegistered, unicode"Electeur déjà enregistré");
         voters[_voterAddress] = Voter(true, false, 0);
@@ -68,13 +68,13 @@ contract Voting is Ownable {
     }
 
     // Démarrer la session d'enregistrement de la proposition
-    function startProposalRegistration() public onlyOwner onlyRegisteringVotersActive {       
+    function startProposalRegistration() external onlyOwner onlyRegisteringVotersActive {       
         activeStatus = WorkflowStatus.ProposalsRegistrationStarted;
         emit WorkflowStatusChange(WorkflowStatus.RegisteringVoters, WorkflowStatus.ProposalsRegistrationStarted);
     }
 
     // Enregistrer les propositions des électeurs
-    function registerProposal(string calldata _proposal) public onlyRegistered onlyProposalRegistrationActive {        
+    function registerProposal(string calldata _proposal) external onlyRegistered onlyProposalRegistrationActive {        
         require(isNewProposal(_proposal), unicode"Proposition déjà enregistrée");
         proposalIndex++;
         proposals[proposalIndex] = Proposal({description: _proposal, voteCount:0});
@@ -83,13 +83,13 @@ contract Voting is Ownable {
     }
 
     // Arret de la session d'enregistrement des propositions
-    function stopProposalRegistration() public onlyOwner onlyProposalRegistrationActive {
+    function stopProposalRegistration() external onlyOwner onlyProposalRegistrationActive {
         activeStatus = WorkflowStatus.ProposalsRegistrationEnded;
         emit WorkflowStatusChange(WorkflowStatus.ProposalsRegistrationStarted, WorkflowStatus.ProposalsRegistrationEnded);
     }
 
     // Demarrer la session de vote
-    function startVotingSession() public onlyOwner {
+    function startVotingSession() external onlyOwner {
         require(activeStatus == WorkflowStatus.ProposalsRegistrationEnded, unicode"Session d'enregistrement des propositions inactive");
 
         activeStatus = WorkflowStatus.VotingSessionStarted;
@@ -97,7 +97,7 @@ contract Voting is Ownable {
     }
 
     // Les électeurs inscrits votent pour leurs propositions préférées
-    function voting(uint _proposalId) public onlyRegistered onlyVotingSessionStarted {
+    function voting(uint _proposalId) external onlyRegistered onlyVotingSessionStarted {
         require(!voters[msg.sender].hasVoted, unicode"Vous avez déjà voté !!!");
         // vérifier que la proposition existe
         require(isProposalExist(_proposalId), unicode"Cette proposition n'existe pas. Faites un autre choix");
@@ -109,12 +109,12 @@ contract Voting is Ownable {
     }
 
     // Fin de la session de vote
-    function stopVotingSession() public onlyOwner onlyVotingSessionStarted {
+    function stopVotingSession() external onlyOwner onlyVotingSessionStarted {
         activeStatus = WorkflowStatus.VotingSessionEnded;
         emit WorkflowStatusChange(WorkflowStatus.VotingSessionStarted, WorkflowStatus.VotingSessionEnded);
     }
 
-    function computeResult() public onlyOwner {
+    function computeResult() external onlyOwner {
         require(activeStatus == WorkflowStatus.VotingSessionEnded, unicode"La session de vote n'est pas terminée");
          
         for (uint i = 0; i < proposalIds.length; i++) {
@@ -138,7 +138,7 @@ contract Voting is Ownable {
         return true;
     }
 
-    function getWinner() public view returns(string memory description, uint voteCount) {
+    function getWinner() external view returns(string memory description, uint voteCount) {
         require(activeStatus == WorkflowStatus.VotesTallied, unicode"Le résultat n'est pas encore disponible");
         return (proposals[winningProposalId].description, proposals[winningProposalId].voteCount);
     }
