@@ -13,7 +13,7 @@ contract("Voting", function ( accounts ) {
     voting = await Voting.deployed();
   });
 
-  it("should be register voters", async() => {
+  it("should register voters", async() => {
     const admin = accounts[0];
     await voting.registerVoter(admin);
     await voting.registerVoter(accounts[1]);
@@ -47,7 +47,7 @@ contract("Voting", function ( accounts ) {
     assert.equal(proposal3.description, '');
   });
 
-  it("should voting", async () => {
+  it("should vote", async () => {
     await voting.stopProposalRegistration();
     await voting.startVotingSession();
 
