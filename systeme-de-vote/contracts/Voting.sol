@@ -30,9 +30,9 @@ contract Voting is Ownable {
 
     mapping(address => Voter) public voters;
     WorkflowStatus public activeStatus;
-    mapping (uint => Proposal) public proposals;
-    uint proposalIndex;
-    uint[] proposalIds;
+    Proposal[] public proposals;
+    uint private proposalIndex;
+  
 
     event VoterRegistered(address voterAddress); 
     event WorkflowStatusChange(WorkflowStatus previousStatus, WorkflowStatus newStatus);
@@ -76,10 +76,10 @@ contract Voting is Ownable {
     // Enregistrer les propositions des électeurs
     function registerProposal(string calldata _proposal) external onlyRegistered onlyProposalRegistrationActive {        
         require(isNewProposal(_proposal), unicode"Proposition déjà enregistrée");
-        proposalIndex++;
-        proposals[proposalIndex] = Proposal({description: _proposal, voteCount:0});
-        proposalIds.push(proposalIndex);
-        emit ProposalRegistered(proposalIndex);             
+        
+        proposals.push( Proposal({description: _proposal, voteCount:0}) );
+        emit ProposalRegistered(proposalIndex);
+        proposalIndex++;             
     }
 
     // Arret de la session d'enregistrement des propositions
@@ -117,8 +117,8 @@ contract Voting is Ownable {
     function computeResult() external onlyOwner {
         require(activeStatus == WorkflowStatus.VotingSessionEnded, unicode"La session de vote n'est pas terminée");
          
-        for (uint i = 0; i < proposalIds.length; i++) {
-            winningProposalId = ( proposals[proposalIds[i]].voteCount > proposals[winningProposalId].voteCount ) ? proposalIds[i] : winningProposalId;
+        for (uint proposalId = 0; proposalId < proposals.length; proposalId++) {
+            winningProposalId = ( proposals[proposalId].voteCount > proposals[winningProposalId].voteCount ) ? proposalId : winningProposalId;
         }
         activeStatus = WorkflowStatus.VotesTallied;
         emit WorkflowStatusChange(WorkflowStatus.VotingSessionEnded, WorkflowStatus.VotesTallied);
@@ -130,8 +130,8 @@ contract Voting is Ownable {
 
     function isNewProposal(string calldata _proposalDescription) private view returns(bool) {
 
-        for(uint i=0; i < proposalIds.length; i++) {
-            if ( keccak256(abi.encodePacked( proposals[proposalIds[i]].description) ) == keccak256(abi.encodePacked(_proposalDescription)) ) {
+        for(uint proposalId = 0; proposalId < proposals.length; proposalId++) {
+            if ( keccak256(abi.encodePacked( proposals[proposalId].description) ) == keccak256(abi.encodePacked(_proposalDescription)) ) {
                 return false;
             }
         }

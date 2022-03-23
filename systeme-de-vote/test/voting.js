@@ -39,23 +39,23 @@ contract("Voting", function ( accounts ) {
     await voting.registerProposal("solidity");
     await voting.registerProposal("java");
 
-    const proposal1 = await voting.proposals(1);
-    const proposal2 = await voting.proposals(2);
-    const proposal3 = await voting.proposals(3);
+    const proposal1 = await voting.proposals(0);
+    const proposal2 = await voting.proposals(1);
+    // const proposal3 = await voting.proposals(3);
     assert.equal(proposal1.description, 'solidity');
     assert.equal(proposal2.description, 'java');
-    assert.equal(proposal3.description, '');
+    // assert.equal(proposal3.description, '');
   });
 
   it("should vote", async () => {
     await voting.stopProposalRegistration();
     await voting.startVotingSession();
 
-    await voting.voting(1);
+    await voting.voting(0);
     const voter0 = await voting.voters(accounts[0]);
     assert.isTrue(voter0.hasVoted);
   
-    await voting.voting(1, {from: accounts[1]});
+    await voting.voting(0, {from: accounts[1]});
     const voter1 = await voting.voters(accounts[1]);
     assert.isTrue(voter1.hasVoted);
     
@@ -63,11 +63,11 @@ contract("Voting", function ( accounts ) {
     const voter2 = await voting.voters(accounts[2]);
     assert.isTrue(voter1.hasVoted);
 
-    await voting.voting(2, {from: accounts[3]});
+    await voting.voting(1, {from: accounts[3]});
     const voter3 = await voting.voters(accounts[3]);
     assert.isTrue(voter1.hasVoted);
 
-    await voting.voting(2, {from: accounts[4]});
+    await voting.voting(1, {from: accounts[4]});
     const voter4 = await voting.voters(accounts[4]);
     assert.isTrue(voter1.hasVoted);
   });
@@ -76,7 +76,7 @@ contract("Voting", function ( accounts ) {
     await voting.stopVotingSession();
     await voting.computeResult();
     const winner = await voting.winningProposalId();
-    assert.equal(winner, 1);
+    assert.equal(1, winner);
   });
 
 });
