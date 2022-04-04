@@ -2,6 +2,7 @@
 
 ## Test de l'enregitrement des electeurs
 - Seul l'administrateur peut enregistrer les electeurs
+- La session d'enregistrement des électeurs doit être active
 - Un électeur enregistré doit avoir la propriété `isRegistered` à `true`
 - On doit obtenir l'event `VoterRegistered`
 
