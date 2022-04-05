@@ -32,6 +32,7 @@
 - La session de vote doit être active
 - Seul les électeurs inscrits peuvent voter
 - On peut seulement voter sur les propositions enregistrées
+- Un electeur ne peut voter qu'une seule fois
 - On doit obtenir l'event `Voted`
 - Le vote de chaque électeur doit être enregistré
 - Les electeurs qui ont voté doivent être marqués `hasVoted`
