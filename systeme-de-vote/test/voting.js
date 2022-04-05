@@ -1,4 +1,3 @@
-//const { from } = require("form-data");
 const { BN, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { unspecified } = require('@openzeppelin/test-helpers/src/expectRevert');
 const { expect } = require('chai');
@@ -15,14 +14,31 @@ contract("Voting", function ( accounts ) {
   
   let votingInstance;
 
+  /*
+  * Test de l'enregistrement des electeurs
+  */
   describe("Tests de l'enregistrement des electeurs", function() {
+
+    context('Test revert, Voters registration is not open yet', function() {
+      it('should revert: Voters registration is not open yet', async() => {
+        votingInstance = await Voting.new({from: admin});
+        await votingInstance.startProposalsRegistering({from: admin}); 
+        await expectRevert(votingInstance.addVoter(unregisteredUser, {from: admin}), 'Voters registration is not open yet');
+      });      
+    });
+
     before('should setup the contract Voting', async () => {
       votingInstance = await Voting.new({from: admin});
     });
 
-    it("should revert registering voter", async () => {
+    it("should revert registering voter: caller is not the owner", async () => {
       await expectRevert(votingInstance.addVoter(unregisteredUser, {from: registeredUser_2}), 'caller is not the owner');
-    })
+    });
+
+    it("should revert registering voter: Already registered", async () => {
+      votingInstance.addVoter(registeredUser_4, {from: admin});
+      await expectRevert(votingInstance.addVoter(registeredUser_4, {from: admin}), 'Already registered');
+    });
 
     it("should have WorkflowStatus.RegisteringVoters", async() => {
       const status = await votingInstance.workflowStatus();
@@ -43,12 +59,26 @@ contract("Voting", function ( accounts ) {
     });
   });
 
+  /*
+   * Test du démarrage de la session d'enregitrement des propositions
+  */
   describe("Test du démarrage de la session d'enregitrement des propositions", function() {
+
+    context('Test revert, Registering proposals cant be started now', function() {
+      it('should revert: Registering proposals cant be started now', async() => {
+        votingInstance = await Voting.new({from: admin});
+        await votingInstance.startProposalsRegistering({from: admin});
+        await votingInstance.endProposalsRegistering({from: admin});  
+
+        await expectRevert(votingInstance.startProposalsRegistering({from: admin}), 'Registering proposals cant be started now');
+      });      
+    });
+
     before('should setup the contract Voting', async () => {
       votingInstance = await Voting.new({from: admin});
     });
 
-    it("should revert start Proposals Registering", async () => {
+    it("should revert start Proposals Registering: caller is not the owner", async () => {
       await expectRevert(votingInstance.startProposalsRegistering({from: registeredUser_2}), 'caller is not the owner');
     })
 
@@ -64,12 +94,22 @@ contract("Voting", function ( accounts ) {
     });
   });
 
+  /*
+   * Test de l'enregistrement des propositions
+  */
   describe("Test de l'enregistrement des propositions", function() {
+    
+    context('Test revert, Proposals are not allowed yet', function() {
+      it('should revert: Proposals are not allowed yet', async() => {
+        votingInstance = await Voting.new({from: admin}); 
+        await initVoters();
+        await expectRevert(votingInstance.addProposal({from: admin}), 'Proposals are not allowed yet');
+      });      
+    });
+
     before('should setup the contract Voting', async () => {
       votingInstance = await Voting.new({from: admin});
-
       await initVoters();
-
       await votingInstance.startProposalsRegistering({from: admin});
     });
 
@@ -99,13 +139,25 @@ contract("Voting", function ( accounts ) {
     });    
   });
 
+  /*
+  * Test de l'arrêt de l'enregistrement des propositions
+  */
   describe("Test de l'arrêt de l'enregistrement des propositions", function() {
+    
+    context('Test revert, Registering proposals havent started yet', function() {
+      it('should revert: Registering proposals havent started yet', async() => {
+        votingInstance = await Voting.new({from: admin}); 
+        
+        await expectRevert(votingInstance.endProposalsRegistering({from: admin}), 'Registering proposals havent started yet');
+      });      
+    });
+
     before('should setup the contract Voting', async () => {
       votingInstance = await Voting.new({from: admin});
       await votingInstance.startProposalsRegistering({from: admin});      
     });
 
-    it("should revert endProposalsRegistering", async () => {
+    it("should revert endProposalsRegistering: caller is not the owner", async () => {
       await expectRevert(votingInstance.endProposalsRegistering({from: registeredUser_2}), 'caller is not the owner');
     })
 
@@ -122,14 +174,26 @@ contract("Voting", function ( accounts ) {
       
   });
 
+  /*
+  * Test du démarrage de la session de vote
+  */
   describe("Test du démarrage de la session de vote", function() {
+
+    context('Test revert, Registering proposals phase is not finished', function() {
+      it('should revert: Registering proposals phase is not finished', async() => {
+        votingInstance = await Voting.new({from: admin}); 
+        
+        await expectRevert(votingInstance.startVotingSession({from: admin}), 'Registering proposals phase is not finished');
+      });      
+    });
+
     before('should setup the contract Voting', async () => {
       votingInstance = await Voting.new({from: admin});
       await votingInstance.startProposalsRegistering({from: admin});
       await votingInstance.endProposalsRegistering({from: admin});      
     });
 
-    it("should revert startVotingSession", async () => {
+    it("should revert startVotingSession: caller is not the owner", async () => {
       await expectRevert(votingInstance.startVotingSession({from: registeredUser_2}), 'caller is not the owner');
     })
 
@@ -146,25 +210,16 @@ contract("Voting", function ( accounts ) {
       
   });
 
+  /*
+  * Test de la session de vote
+  */
   describe("Test de la session de vote", function() {
     
-    context('Test de l\'activation de la session de vote', function() {
-      it("should have WorkflowStatus.VotingSessionStarted", async() => {
+    context('Test de session de vote non activée', function() {
+      it("should revert: Voting session havent started yet", async() => {
         votingInstance = await Voting.new({from: admin});
-
         await initVoters();
-
-        await votingInstance.startProposalsRegistering({from: admin});
-        await votingInstance.addProposal('proposition 0', {from: registeredUser_1});
-        await votingInstance.addProposal('proposition 1', {from: registeredUser_2});
-
-        await votingInstance.endProposalsRegistering({from: admin});
-
         await expectRevert(votingInstance.setVote(new BN(0), {from: admin}), 'Voting session havent started yet');
-        
-        await votingInstance.startVotingSession({from: admin});
-        const status = await votingInstance.workflowStatus();
-        expect(status.toString()).to.equal(Voting.WorkflowStatus.VotingSessionStarted.toString());
       });
     });
     
@@ -208,21 +263,23 @@ contract("Voting", function ( accounts ) {
        
   });
 
+  /*
+  * Test de l'arrêt des votes
+  */
   describe("Test de l'arrêt des votes", function() {
+
+    context('Test revert, session de vote inactive', function() {
+      it('should revert: Voting session havent started yet', async() => {
+        votingInstance = await Voting.new({from: admin});  
+        await expectRevert(votingInstance.endVotingSession({from: admin}), 'Voting session havent started yet');
+      });      
+    });
+    
     before('should setup the contract Voting', async () => {
       votingInstance = await Voting.new({from: admin});
       await votingInstance.startProposalsRegistering({from: admin});
       await votingInstance.endProposalsRegistering({from: admin});   
       await votingInstance.startVotingSession({from: admin});       
-    });
-
-    context('Test revert, session de vote inactive', function() {
-      it('should revert: Voting session havent started yet', async() => {
-        votingInstance = await Voting.new({from: admin});
-        await votingInstance.startProposalsRegistering({from: admin});
-        await votingInstance.endProposalsRegistering({from: admin});  
-        await expectRevert(votingInstance.endVotingSession({from: admin}), 'Voting session havent started yet');
-      });      
     });
 
     it("should revert endVotingSession", async () => {
@@ -242,8 +299,18 @@ contract("Voting", function ( accounts ) {
       
   });
 
+  /*
+  * Test de comptage des votes
+  */
   describe('Test de comptage des votes', function(){
     const _winningProposalId = new BN(1);
+
+    context('Test revert, session de vote non terminée', function() {
+      it('should revert: Current status is not voting session ended', async() => {
+        votingInstance = await Voting.new({from: admin});  
+        await expectRevert(votingInstance.tallyVotes({from: admin}), 'Current status is not voting session ended');
+      });      
+    });
     
     before('should setup the contract Voting', async () => {
       votingInstance = await Voting.new({from: admin});
@@ -261,15 +328,6 @@ contract("Voting", function ( accounts ) {
       await votingInstance.setVote(_winningProposalId, {from: registeredUser_3});
       await votingInstance.setVote(new BN(0), {from: registeredUser_4});
       await votingInstance.endVotingSession({from: admin});
-    });
-
-    
-    context('Test revert, session de vote non terminée', function() {
-      it('should revert: Current status is not voting session ended', async() => {
-        votingInstance = await Voting.new({from: admin});  
-
-        await expectRevert(votingInstance.tallyVotes({from: admin}), 'Current status is not voting session ended');
-      });      
     });
 
     it("should revert tallyVotes: caller is not the owner", async () => {
